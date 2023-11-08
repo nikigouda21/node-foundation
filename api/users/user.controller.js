@@ -1,19 +1,22 @@
 const {
   create,
-  getUserByUserEmail,
+  getUserByEmail,
   getUserByUserId,
   getUsers,
   updateUser,
   deleteUser
 } = require("./user.service");
-const { hashSync, genSaltSync, compareSync } = require("bcrypt");
+const { hashSync, genSaltSync, compare } = require("bcrypt");
 const { sign } = require("jsonwebtoken");
+require("dotenv").config();
+const jwtKey = process.env.JWT_KEY
+const expiresIn = process.env.JWT_KEY_EXPIRY
 
 module.exports = {
   createUser: (req, res) => {
     const body = req.body;
     const salt = genSaltSync(10);
-    body.password = hashSync(body.password, salt);
+    body.password = hashSync(body.password, salt, null);
     create(body, (err, results) => {
       if (err) {
         console.log(err);
@@ -30,7 +33,7 @@ module.exports = {
   },
   login: (req, res) => {
     const body = req.body;
-    getUserByUserEmail(body.email, (err, results) => {
+    getUserByEmail(body.email, (err, results) => {
       if (err) {
         console.log(err);
       }
@@ -40,11 +43,11 @@ module.exports = {
           data: "Invalid email or password"
         });
       }
-      const result = compareSync(body.password, results.password);
+      const result = compare(body.password, results.password);
       if (result) {
         results.password = undefined;
-        const jsontoken = sign({ result: results }, "qwe1234", {
-          expiresIn: "1h"
+        const jsontoken = sign({ result }, jwtKey, {
+          expiresIn
         });
         return res.json({
           success: 1,
@@ -57,6 +60,7 @@ module.exports = {
           data: "Invalid email or password"
         });
       }
+
     });
   },
   getUserByUserId: (req, res) => {
@@ -69,7 +73,7 @@ module.exports = {
       if (!results) {
         return res.json({
           success: 0,
-          message: "Record not Found"
+          message: "User not Found"
         });
       }
       results.password = undefined;
@@ -100,9 +104,15 @@ module.exports = {
         console.log(err);
         return;
       }
+      if (!results) {
+        return res.json({
+          success: 0,
+          message: "Failed to update user"
+        })
+      }
       return res.json({
         success: 1,
-        message: "updated successfully"
+        message: "User info updated successfully"
       });
     });
   },
@@ -116,12 +126,12 @@ module.exports = {
       if (!results) {
         return res.json({
           success: 0,
-          message: "Record Not Found"
+          message: "User Not Found"
         });
       }
       return res.json({
         success: 1,
-        message: "user deleted successfully"
+        message: "User deleted successfully"
       });
     });
   }

@@ -1,17 +1,19 @@
 const pool = require("../../config/database");
+const { v4 } = require('uuid');
 
 module.exports = {
   create: (data, callBack) => {
+    const generateId = v4();
     pool.query(
-      `insert into registration(firstName, lastName, gender, email, password, number) 
+      `insert into registration(id , firstName, lastName, email, password, role)
                 values(?,?,?,?,?,?)`,
       [
-        data.first_name,
-        data.last_name,
-        data.gender,
+        generateId,
+        data.firstName,
+        data.lastName,
         data.email,
         data.password,
-        data.number
+        data.role
       ],
       (error, results, fields) => {
         if (error) {
@@ -21,7 +23,7 @@ module.exports = {
       }
     );
   },
-  getUserByUserEmail: (email, callBack) => {
+  getUserByEmail: (email, callBack) => {
     pool.query(
       `select * from registration where email = ?`,
       [email],
@@ -35,7 +37,7 @@ module.exports = {
   },
   getUserByUserId: (id, callBack) => {
     pool.query(
-      `select id,firstName,lastName,gender,email,number from registration where id = ?`,
+      `select id,firstName,lastName,email,role from registration where id = ?`,
       [id],
       (error, results, fields) => {
         if (error) {
@@ -47,7 +49,7 @@ module.exports = {
   },
   getUsers: callBack => {
     pool.query(
-      `select id,firstName,lastName,gender,email,number from registration`,
+      `select id,firstName,lastName,email,role from registration`,
       [],
       (error, results, fields) => {
         if (error) {
@@ -59,14 +61,13 @@ module.exports = {
   },
   updateUser: (data, callBack) => {
     pool.query(
-      `update registration set firstName=?, lastName=?, gender=?, email=?, password=?, number=? where id = ?`,
+      `update registration set firstName=?, lastName=?, email=?, password=?, role=? where id = ?`,
       [
-        data.first_name,
-        data.last_name,
-        data.gender,
+        data.firstName,
+        data.lastName,
         data.email,
         data.password,
-        data.number,
+        data.role,
         data.id
       ],
       (error, results, fields) => {
